@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"time"
 
 	"github.com/golang/glog"
@@ -24,7 +25,8 @@ import (
 
 func main() {
 	nodeName := flag.String("node-name", "", "name of kubernetes node")
-	pollInterval := flag.Int("poll-interval", 10, "interval between updates in seconds, 10 by default")
+	const defaultPollInterval = 60
+	pollInterval := flag.Int("update-interval", defaultPollInterval, fmt.Sprintf("interval between updates in seconds, %d by default", defaultPollInterval))
 
 	flag.Parse()
 
