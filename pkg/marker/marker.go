@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kubevirt/bridge-marker/pkg/cache"
 	"strings"
 
 	"github.com/golang/glog"
@@ -72,7 +73,7 @@ func getAvailableResources() (map[string]bool, error) {
 	return availableResources, nil
 }
 
-func getReportedResources(nodeName string) (map[string]bool, error) {
+func GetReportedResources(nodeName string) (map[string]bool, error) {
 	reportedResources := make(map[string]bool)
 	node, err := clientset.
 		CoreV1().
@@ -88,20 +89,15 @@ func getReportedResources(nodeName string) (map[string]bool, error) {
 			reportedResources[splitNodeResourceName[1]] = true
 		}
 	}
-
 	return reportedResources, nil
 }
 
-func Update(nodeName string) error {
+func Update(nodeName string, cache cache.Cache) error {
 	availableResources, err := getAvailableResources()
 	if err != nil {
 		return fmt.Errorf("failed to list available resources: %v", err)
 	}
-	reportedResources, err := getReportedResources(nodeName)
-	if err != nil {
-		return fmt.Errorf("failed to list reported resources: %v", err)
-	}
-
+	reportedResources := cache.Bridges()
 	patchOperations := make([]patchOperation, 0)
 
 	for reportedResource, _ := range reportedResources {
@@ -140,5 +136,6 @@ func Update(nodeName string) error {
 		return fmt.Errorf("failed to apply patch %s on node: %v", payloadBytes, err)
 	}
 
+	cache.Refresh(availableResources)
 	return nil
 }
